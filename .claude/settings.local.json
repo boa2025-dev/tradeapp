@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:www.checklistinsider.com)",
+      "WebFetch(domain:football-sticker-album.fandom.com)"
+    ]
+  }
+}
