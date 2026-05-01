@@ -1,18 +1,22 @@
 import { useState, FormEvent, useEffect } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
+import { getUserByUsername, sendFriendRequest } from '../lib/firestore'
 
 export default function RegisterPage() {
-  const { register, loginWithGoogle, finishGoogleSetup, pendingGoogleUser } = useAuth()
+  const { register, loginWithGoogle, finishGoogleSetup, pendingGoogleUser, user } = useAuth()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const isGoogleFlow = searchParams.get('google') === '1' || Boolean(pendingGoogleUser)
+  const refUsername = searchParams.get('ref') ?? ''
 
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [error, setError] = useState('')
+  const [refModal, setRefModal] = useState(false)
+  const [refAdding, setRefAdding] = useState(false)
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
 
@@ -23,13 +27,21 @@ export default function RegisterPage() {
     }
   }, [pendingGoogleUser, searchParams, navigate])
 
+  function afterRegister() {
+    if (refUsername) {
+      setRefModal(true)
+    } else {
+      navigate('/album')
+    }
+  }
+
   async function handleGoogleUsernameSubmit(e: FormEvent) {
     e.preventDefault()
     setError('')
     setLoading(true)
     try {
       await finishGoogleSetup(username)
-      navigate('/album')
+      afterRegister()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error')
     } finally {
@@ -45,7 +57,7 @@ export default function RegisterPage() {
     setLoading(true)
     try {
       await register(email, password, username)
-      navigate('/album')
+      afterRegister()
     } catch (err) {
       const msg = err instanceof Error ? err.message : ''
       setError(msg.includes('email-already-in-use') ? 'Ese correo ya está registrado.' : msg || 'Error al registrarse.')
@@ -54,12 +66,27 @@ export default function RegisterPage() {
     }
   }
 
+  async function handleAddRef() {
+    setRefAdding(true)
+    try {
+      const refUid = await getUserByUsername(refUsername.toLowerCase())
+      if (refUid && user) await sendFriendRequest(user.uid, refUid)
+    } finally {
+      setRefAdding(false)
+      navigate('/album')
+    }
+  }
+
   async function handleGoogle() {
     setError('')
     setGoogleLoading(true)
     try {
       const { needsUsername } = await loginWithGoogle()
-      navigate(needsUsername ? '/register?google=1' : '/album')
+      if (needsUsername) {
+        navigate(refUsername ? `/register?google=1&ref=${refUsername}` : '/register?google=1')
+      } else {
+        afterRegister()
+      }
     } catch (err) {
       const msg = err instanceof Error ? err.message : ''
       if (!msg.includes('popup-closed') && !msg.includes('cancelled-popup')) {
@@ -68,6 +95,39 @@ export default function RegisterPage() {
     } finally {
       setGoogleLoading(false)
     }
+  }
+
+  // Referral modal
+  if (refModal) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-950 px-4">
+        <div className="w-full max-w-sm bg-gray-900 rounded-2xl border border-green-800 p-6 space-y-5 text-center">
+          <span className="text-5xl">🤝</span>
+          <div>
+            <h2 className="text-xl font-bold text-white">¡Te invitó un amigo!</h2>
+            <p className="text-gray-400 text-sm mt-2">
+              <span className="text-green-400 font-semibold">@{refUsername}</span> te invitó a TradeApp.
+              ¿Querés agregarlo como amigo para ver intercambios de figuritas?
+            </p>
+          </div>
+          <div className="flex flex-col gap-2">
+            <button
+              onClick={handleAddRef}
+              disabled={refAdding}
+              className="w-full bg-green-700 hover:bg-green-600 disabled:bg-gray-700 text-white font-bold py-3 rounded-xl transition-colors"
+            >
+              {refAdding ? 'Agregando...' : `Sí, agregar a @${refUsername}`}
+            </button>
+            <button
+              onClick={() => navigate('/album')}
+              className="w-full bg-gray-800 hover:bg-gray-700 text-gray-300 font-semibold py-2.5 rounded-xl transition-colors text-sm"
+            >
+              Ahora no
+            </button>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   // Google flow: only ask for username
