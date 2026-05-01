@@ -148,7 +148,7 @@ export default function ScannerModal({ onAdd, onClose }: ScannerModalProps) {
             </div>
           ) : (
             <>
-              <div className="flex-1 relative overflow-hidden bg-black">
+              <div className="flex-1 relative overflow-hidden bg-black flex flex-col">
                 <video
                   ref={videoRef}
                   autoPlay
@@ -161,15 +161,16 @@ export default function ScannerModal({ onAdd, onClose }: ScannerModalProps) {
                   <div className="w-72 h-40 border-2 border-green-400 rounded-xl opacity-70" />
                 </div>
               </div>
-              <div className="bg-gray-900 px-4 py-5 space-y-3">
-                <p className="text-gray-400 text-sm text-center">
-                  Apuntá la cámara al código de la figurita y capturá
+              {/* Floating capture button */}
+              <div className="absolute bottom-8 left-0 right-0 flex flex-col items-center gap-2 pointer-events-none">
+                <p className="text-white/60 text-xs bg-black/40 px-3 py-1 rounded-full">
+                  Apuntá al código de la figurita
                 </p>
                 <button
                   onClick={handleCapture}
-                  className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3.5 rounded-xl transition-colors text-lg"
+                  className="pointer-events-auto w-20 h-20 rounded-full bg-white border-4 border-green-500 shadow-xl shadow-black/60 active:scale-95 transition-transform flex items-center justify-center"
                 >
-                  📸 Capturar
+                  <span className="text-3xl">📸</span>
                 </button>
               </div>
             </>
