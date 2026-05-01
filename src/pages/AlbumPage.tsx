@@ -4,10 +4,18 @@ import { GROUPS, ALL_STICKERS } from '../data/stickers'
 import ProgressBar from '../components/ProgressBar'
 import GroupSection from '../components/GroupSection'
 import StickerItem from '../components/StickerItem'
+import ScannerModal from '../components/ScannerModal'
 
 export default function AlbumPage() {
   const { owned, loading, increment, decrement, percentage, total, ownedCount } = useStickers()
   const [search, setSearch] = useState('')
+  const [scanning, setScanning] = useState(false)
+
+  async function handleScanAdd(ids: string[]) {
+    for (const id of ids) {
+      await increment(id)
+    }
+  }
 
   if (loading) {
     return (
@@ -33,14 +41,27 @@ export default function AlbumPage() {
 
   return (
     <div className="space-y-5">
+      {scanning && (
+        <ScannerModal
+          onAdd={handleScanAdd}
+          onClose={() => setScanning(false)}
+        />
+      )}
       <ProgressBar owned={ownedCount} total={total} percentage={percentage} />
 
       <div className="flex items-center gap-3">
         <h1 className="text-xl font-bold text-white flex-1">Álbum FIFA World Cup 2026™</h1>
-        <div className="flex items-center gap-2 text-xs text-gray-500">
-          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-600 inline-block"/>Tenés</span>
-          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500 inline-block"/>Repetida</span>
-        </div>
+        <button
+          onClick={() => setScanning(true)}
+          className="flex items-center gap-1.5 bg-green-700 hover:bg-green-600 text-white text-sm font-semibold px-3 py-2 rounded-xl transition-colors"
+        >
+          <span>📷</span> Escanear
+        </button>
+      </div>
+
+      <div className="flex items-center gap-3 text-xs text-gray-500">
+        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-600 inline-block"/>Tenés</span>
+        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500 inline-block"/>Repetida</span>
       </div>
 
       <input
