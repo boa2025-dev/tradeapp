@@ -1,13 +1,16 @@
 import { useState } from 'react'
 import { useStickers } from '../hooks/useStickers'
 import { GROUPS, ALL_STICKERS } from '../data/stickers'
+import { useAuth } from '../hooks/useAuth'
 import ProgressBar from '../components/ProgressBar'
 import GroupSection from '../components/GroupSection'
 import StickerItem from '../components/StickerItem'
 import ScannerModal from '../components/ScannerModal'
 
 export default function AlbumPage() {
+  const { user } = useAuth()
   const { owned, loading, increment, decrement, percentage, total, ownedCount } = useStickers()
+  const canScan = user?.email === 'boteroalen@udesa.edu.ar'
   const [search, setSearch] = useState('')
   const [scanning, setScanning] = useState(false)
 
@@ -51,12 +54,14 @@ export default function AlbumPage() {
 
       <div className="flex items-center gap-3">
         <h1 className="text-xl font-bold text-white flex-1">Álbum FIFA World Cup 2026™</h1>
-        <button
-          onClick={() => setScanning(true)}
-          className="flex items-center gap-1.5 bg-green-700 hover:bg-green-600 text-white text-sm font-semibold px-3 py-2 rounded-xl transition-colors"
-        >
-          <span>📷</span> Escanear
-        </button>
+        {canScan && (
+          <button
+            onClick={() => setScanning(true)}
+            className="flex items-center gap-1.5 bg-green-700 hover:bg-green-600 text-white text-sm font-semibold px-3 py-2 rounded-xl transition-colors"
+          >
+            <span>📷</span> Escanear
+          </button>
+        )}
       </div>
 
       <div className="flex items-center gap-3 text-xs text-gray-500">
