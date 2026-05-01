@@ -13,6 +13,7 @@ import {
   UserProfile,
   OwnedMap,
 } from '../lib/firestore'
+import { sendFriendRequestEmail, sendTradeOpportunityEmail } from '../lib/email'
 import { ALL_STICKERS } from '../data/stickers'
 
 export interface FriendWithTrades {
@@ -55,13 +56,61 @@ export function useFriends() {
     const targetProfile = await getUserProfile(targetUid)
     if (targetProfile?.friendRequests.includes(user.uid))
       throw new Error('Ya enviaste una solicitud.')
+
     await sendFriendRequest(user.uid, targetUid)
+
+    // Email notification — fire and forget
+    if (targetProfile) {
+      sendFriendRequestEmail({
+        toEmail:      targetProfile.email,
+        toUsername:   targetProfile.username,
+        fromUsername: profile.username,
+      })
+    }
+
     return `Solicitud enviada a @${trimmed}`
   }
 
   async function accept(requesterUid: string) {
-    if (!user) return
+    if (!user || !profile) return
     await acceptFriendRequest(user.uid, requesterUid)
+
+    // After accepting, compute trades and notify both sides
+    const [requesterProfile, myStickers, requesterStickers] = await Promise.all([
+      getUserProfile(requesterUid),
+      getStickers(user.uid),
+      getStickers(requesterUid),
+    ])
+    if (!requesterProfile) return
+
+    const allIds = ALL_STICKERS.map(s => s.id)
+    // What the requester can give me (they have repeats, I don't have it)
+    const iCanReceive = allIds.filter(id => (requesterStickers[id] ?? 0) > 1 && (myStickers[id] ?? 0) === 0)
+    // What I can give them (I have repeats, they don't have it)
+    const theyCanReceive = allIds.filter(id => (myStickers[id] ?? 0) > 1 && (requesterStickers[id] ?? 0) === 0)
+
+    // Notify the requester: you can now trade with the person who accepted
+    if (iCanReceive.length > 0) {
+      sendTradeOpportunityEmail({
+        toEmail:      requesterProfile.email,
+        toUsername:   requesterProfile.username,
+        fromUsername: profile.username,
+        fromUid:      user.uid,
+        toUid:        requesterUid,
+        stickerList:  iCanReceive,
+      })
+    }
+    // Notify me (acceptor): the new friend has stickers for me
+    if (theyCanReceive.length > 0) {
+      sendTradeOpportunityEmail({
+        toEmail:      profile.email,
+        toUsername:   profile.username,
+        fromUsername: requesterProfile.username,
+        fromUid:      requesterUid,
+        toUid:        user.uid,
+        stickerList:  theyCanReceive,
+      })
+    }
   }
 
   async function reject(requesterUid: string) {
@@ -85,9 +134,7 @@ export function useFriends() {
   ): Promise<{ canGive: string[]; canReceive: string[] }> {
     const friendOwned: OwnedMap = await getStickers(friendUid)
     const allIds = ALL_STICKERS.map(s => s.id)
-    // Can give: I have more than 1 (repetidas) AND friend doesn't have it
-    const canGive = allIds.filter(id => (myOwned[id] ?? 0) > 1 && (friendOwned[id] ?? 0) === 0)
-    // Can receive: friend has more than 1 (repetidas) AND I don't have it
+    const canGive    = allIds.filter(id => (myOwned[id] ?? 0) > 1 && (friendOwned[id] ?? 0) === 0)
     const canReceive = allIds.filter(id => (friendOwned[id] ?? 0) > 1 && (myOwned[id] ?? 0) === 0)
     return { canGive, canReceive }
   }
