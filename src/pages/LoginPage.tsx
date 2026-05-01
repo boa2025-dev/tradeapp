@@ -1,5 +1,7 @@
 import { useState, FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { sendPasswordResetEmail } from 'firebase/auth'
+import { auth } from '../lib/firebase'
 import { useAuth } from '../hooks/useAuth'
 
 export default function LoginPage() {
@@ -10,6 +12,32 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
+
+  const [showReset, setShowReset] = useState(false)
+  const [resetEmail, setResetEmail] = useState('')
+  const [resetMsg, setResetMsg] = useState('')
+  const [resetError, setResetError] = useState('')
+  const [resetLoading, setResetLoading] = useState(false)
+
+  async function handleReset(e: FormEvent) {
+    e.preventDefault()
+    setResetMsg('')
+    setResetError('')
+    setResetLoading(true)
+    try {
+      await sendPasswordResetEmail(auth, resetEmail)
+      setResetMsg('Te enviamos un correo para restablecer tu contraseña. Revisá tu bandeja de entrada.')
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : ''
+      if (msg.includes('user-not-found') || msg.includes('invalid-email')) {
+        setResetError('No encontramos una cuenta con ese correo.')
+      } else {
+        setResetError('Ocurrió un error. Intentá de nuevo.')
+      }
+    } finally {
+      setResetLoading(false)
+    }
+  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -101,7 +129,16 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label className="block text-sm text-gray-400 mb-1">Contraseña</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-sm text-gray-400">Contraseña</label>
+                <button
+                  type="button"
+                  onClick={() => { setShowReset(v => !v); setResetMsg(''); setResetError('') }}
+                  className="text-xs text-green-500 hover:text-green-400 transition-colors"
+                >
+                  ¿Olvidaste tu contraseña?
+                </button>
+              </div>
               <input
                 type="password"
                 value={password}
@@ -111,6 +148,35 @@ export default function LoginPage() {
                 placeholder="••••••••"
               />
             </div>
+
+            {/* Reset password panel */}
+            {showReset && (
+              <div className="bg-gray-800/60 border border-gray-700 rounded-xl p-4 space-y-3">
+                <p className="text-gray-300 text-sm font-medium">Restablecer contraseña</p>
+                {resetMsg ? (
+                  <p className="text-green-400 text-sm">{resetMsg}</p>
+                ) : (
+                  <form onSubmit={handleReset} className="flex gap-2">
+                    <input
+                      type="email"
+                      value={resetEmail}
+                      onChange={e => setResetEmail(e.target.value)}
+                      required
+                      placeholder="tu@correo.com"
+                      className="flex-1 bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-green-600 transition-colors"
+                    />
+                    <button
+                      type="submit"
+                      disabled={resetLoading}
+                      className="bg-green-700 hover:bg-green-600 disabled:bg-gray-600 text-white text-sm font-semibold px-3 py-2 rounded-lg transition-colors whitespace-nowrap"
+                    >
+                      {resetLoading ? '...' : 'Enviar'}
+                    </button>
+                  </form>
+                )}
+                {resetError && <p className="text-red-400 text-xs">{resetError}</p>}
+              </div>
+            )}
 
             <button
               type="submit"
