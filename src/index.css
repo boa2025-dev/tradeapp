@@ -39,3 +39,14 @@
   from { opacity: 0; transform: scale(0.6) rotateY(60deg); }
   to   { opacity: 1; transform: scale(1) rotateY(0deg); }
 }
+
+@keyframes scanLine {
+  0%   { top: 2px; opacity: 1; }
+  90%  { top: calc(100% - 4px); opacity: 1; }
+  100% { top: calc(100% - 4px); opacity: 0; }
+}
+
+.animate-scan-line {
+  animation: scanLine 1.2s ease-in-out infinite;
+  position: absolute;
+}
