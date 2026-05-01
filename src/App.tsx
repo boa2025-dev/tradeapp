@@ -8,6 +8,8 @@ import AlbumPage from './pages/AlbumPage'
 import MissingPage from './pages/MissingPage'
 import FriendsPage from './pages/FriendsPage'
 import TradesPage from './pages/TradesPage'
+import RepeatedPage from './pages/RepeatedPage'
+import AddFriendPage from './pages/AddFriendPage'
 import SetupPage from './pages/SetupPage'
 import LandingPage from './pages/LandingPage'
 import { FIREBASE_CONFIGURED } from './lib/firebase'
@@ -32,7 +34,9 @@ export default function App() {
                   <Routes>
                     <Route path="/album" element={<AlbumPage />} />
                     <Route path="/missing" element={<MissingPage />} />
+                    <Route path="/repeated" element={<RepeatedPage />} />
                     <Route path="/friends" element={<FriendsPage />} />
+                    <Route path="/add" element={<AddFriendPage />} />
                     <Route path="/trades/:friendId" element={<TradesPage />} />
                     <Route path="*" element={<Navigate to="/album" replace />} />
                   </Routes>

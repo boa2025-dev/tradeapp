@@ -41,6 +41,16 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               Faltantes
             </NavLink>
             <NavLink
+              to="/repeated"
+              className={({ isActive }) =>
+                `px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                  isActive ? 'bg-amber-700 text-white' : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                }`
+              }
+            >
+              Repetidas
+            </NavLink>
+            <NavLink
               to="/friends"
               className={({ isActive }) =>
                 `px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
@@ -72,6 +82,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           {[
             { to: '/album', label: 'Álbum', icon: '📖' },
             { to: '/missing', label: 'Faltantes', icon: '🔍' },
+            { to: '/repeated', label: 'Repetidas', icon: '🔄' },
             { to: '/friends', label: 'Amigos', icon: '👥' },
           ].map(link => (
             <NavLink

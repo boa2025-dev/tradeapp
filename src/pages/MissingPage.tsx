@@ -1,9 +1,7 @@
 import { useState } from 'react'
 import { useStickers } from '../hooks/useStickers'
-import { GROUPS, STICKER_MAP, ALL_STICKERS } from '../data/stickers'
+import { GROUPS, STICKER_MAP } from '../data/stickers'
 import { CC_STICKERS_IDS } from '../data/stickers'
-
-type Tab = 'missing' | 'repeated'
 
 const APP_URL = 'https://tradeapp26.vercel.app'
 
@@ -14,10 +12,8 @@ const WA_ICON = (
 )
 
 export default function MissingPage() {
-  const { owned, missing, loading, total } = useStickers()
-  const [tab, setTab] = useState<Tab>('missing')
-  const [copiedMissing, setCopiedMissing] = useState(false)
-  const [copiedRepeated, setCopiedRepeated] = useState(false)
+  const { missing, loading, total } = useStickers()
+  const [copied, setCopied] = useState(false)
 
   if (loading) {
     return (
@@ -27,10 +23,7 @@ export default function MissingPage() {
     )
   }
 
-  const repeated = ALL_STICKERS.filter(s => (owned[s.id] ?? 0) > 1)
-
-  // ── Missing message ───────────────────────────────────────────
-  function buildMissingMessage(): string {
+  function buildMessage(): string {
     const lines = [
       '¡Hola! Estoy usando TradeApp 📲⚽',
       `👉 ${APP_URL}`,
@@ -56,244 +49,95 @@ export default function MissingPage() {
     return lines.join('\n')
   }
 
-  // ── Repeated message ──────────────────────────────────────────
-  function buildRepeatedMessage(): string {
-    const lines = [
-      '¡Hola! Estoy usando TradeApp 📲⚽',
-      `👉 ${APP_URL}`,
-      '',
-      'Mis figuritas *repetidas* del Mundial 2026:',
-      '',
-    ]
-    for (const group of GROUPS) {
-      const gr = repeated.filter(s => s.group === group.id)
-      if (gr.length === 0) continue
-      lines.push(`*Grupo ${group.id}*`)
-      for (const team of group.teams) {
-        const tr = gr.filter(s => s.teamCode === team.code)
-        if (tr.length === 0) continue
-        lines.push(`${team.flag} ${team.name}: ${tr.map(s => s.id).join(', ')}`)
-      }
-      lines.push('')
-    }
-    const fwcR = repeated.filter(s => s.type === 'intro' || s.type === 'museum')
-    if (fwcR.length > 0) lines.push(`🏅 FWC: ${fwcR.map(s => s.id).join(', ')}`)
-    const ccR = repeated.filter(s => s.type === 'cocacola')
-    if (ccR.length > 0) lines.push(`🥤 Coca-Cola: ${ccR.map(s => s.id).join(', ')}`)
-    return lines.join('\n')
+  async function copyList() {
+    await navigator.clipboard.writeText(buildMessage())
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
   }
 
-  async function copyMissingList() {
-    await navigator.clipboard.writeText(buildMissingMessage())
-    setCopiedMissing(true)
-    setTimeout(() => setCopiedMissing(false), 2000)
-  }
-
-  async function copyRepeated() {
-    await navigator.clipboard.writeText(buildRepeatedMessage())
-    setCopiedRepeated(true)
-    setTimeout(() => setCopiedRepeated(false), 2000)
-  }
-
-  function shareWhatsAppMissing() {
-    window.open(`https://wa.me/?text=${encodeURIComponent(buildMissingMessage())}`, '_blank')
-  }
-
-  function shareWhatsAppRepeated() {
-    window.open(`https://wa.me/?text=${encodeURIComponent(buildRepeatedMessage())}`, '_blank')
+  function shareWA() {
+    window.open(`https://wa.me/?text=${encodeURIComponent(buildMessage())}`, '_blank')
   }
 
   return (
     <div className="space-y-5">
-      <h1 className="text-xl font-bold text-white">Mis figuritas</h1>
-
-      {/* Tabs */}
-      <div className="flex bg-gray-900 rounded-xl p-1 gap-1">
-        <button
-          onClick={() => setTab('missing')}
-          className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-colors ${
-            tab === 'missing' ? 'bg-gray-700 text-white' : 'text-gray-500 hover:text-gray-300'
-          }`}
-        >
-          Faltantes
-          <span className="ml-1.5 text-xs bg-gray-600 text-gray-300 px-1.5 py-0.5 rounded-full">{missing.length}</span>
-        </button>
-        <button
-          onClick={() => setTab('repeated')}
-          className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-colors ${
-            tab === 'repeated' ? 'bg-amber-800/60 text-amber-300' : 'text-gray-500 hover:text-gray-300'
-          }`}
-        >
-          Repetidas
-          <span className="ml-1.5 text-xs bg-gray-700 text-gray-300 px-1.5 py-0.5 rounded-full">{repeated.length}</span>
-        </button>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-bold text-white">Faltantes</h1>
+          <p className="text-gray-500 text-sm mt-0.5">
+            {missing.length === 0 ? '🎉 ¡Álbum completo!' : `${missing.length} de ${total}`}
+          </p>
+        </div>
+        {missing.length > 0 && (
+          <button onClick={copyList} className="bg-gray-800 hover:bg-gray-700 text-gray-200 text-sm px-3 py-1.5 rounded-lg transition-colors">
+            {copied ? '✓ Copiado' : '📋 Copiar'}
+          </button>
+        )}
       </div>
 
-      {/* ── FALTANTES ── */}
-      {tab === 'missing' && (
-        <>
-          <div className="flex items-center justify-between">
-            <p className="text-gray-500 text-sm">
-              {missing.length === 0 ? '🎉 ¡Álbum completo!' : `${missing.length} de ${total}`}
-            </p>
-            {missing.length > 0 && (
-              <button onClick={copyMissingList} className="bg-gray-800 hover:bg-gray-700 text-gray-200 text-sm px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5">
-                {copiedMissing ? '✓ Copiado' : '📋 Copiar'}
-              </button>
-            )}
-          </div>
-
-          {missing.length > 0 && (
-            <button
-              onClick={shareWhatsAppMissing}
-              className="w-full flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#1ebe5d] text-white font-bold py-3 rounded-2xl transition-colors"
-            >
-              {WA_ICON} Compartir faltantes por WhatsApp
-            </button>
-          )}
-
-          {missing.length === 0 ? (
-            <div className="bg-green-900/30 border border-green-800 rounded-2xl p-10 text-center">
-              <span className="text-5xl">🏆</span>
-              <p className="text-green-300 font-bold text-lg mt-4">¡Álbum completo!</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {(() => {
-                const fwcM = missing.filter(s => s.type === 'intro' || s.type === 'museum')
-                if (fwcM.length === 0) return null
-                return (
-                  <div className="bg-gray-900 rounded-xl border border-gray-800 p-4">
-                    <h3 className="font-semibold text-yellow-400 mb-3">🏅 Introducción FWC <span className="text-xs text-gray-500 font-normal">faltan {fwcM.length}</span></h3>
-                    <div className="flex flex-wrap gap-1.5">
-                      {fwcM.map(s => <span key={s.id} className="text-xs font-mono bg-gray-800 text-yellow-300 px-2 py-0.5 rounded border border-gray-700">{s.id}</span>)}
-                    </div>
-                  </div>
-                )
-              })()}
-
-              {(() => {
-                const ccM = missing.filter(s => s.type === 'cocacola')
-                if (ccM.length === 0) return null
-                return (
-                  <div className="bg-gray-900 rounded-xl border border-red-900/50 p-4">
-                    <h3 className="font-semibold text-red-400 mb-3 flex items-center gap-2">🥤 Coca-Cola <span className="text-xs text-gray-500 font-normal">faltan {ccM.length} de {CC_STICKERS_IDS.length}</span></h3>
-                    <div className="flex flex-wrap gap-1.5">
-                      {ccM.map(s => <span key={s.id} className="text-xs font-mono bg-gray-800 text-red-300 px-2 py-0.5 rounded border border-gray-700">{s.id}</span>)}
-                    </div>
-                  </div>
-                )
-              })()}
-
-              {GROUPS.map(group => {
-                const gm = missing.filter(s => s.group === group.id)
-                if (gm.length === 0) return null
-                return (
-                  <div key={group.id} className="bg-gray-900 rounded-xl border border-gray-800 p-4">
-                    <h3 className="font-semibold text-green-400 mb-3">Grupo {group.id} <span className="text-xs text-gray-500 font-normal">faltan {gm.length}</span></h3>
-                    <div className="space-y-2">
-                      {group.teams.map(team => {
-                        const tm = gm.filter(s => s.teamCode === team.code)
-                        if (tm.length === 0) return null
-                        return (
-                          <div key={team.code} className="flex items-start gap-2">
-                            <span className="text-base shrink-0 mt-0.5">{team.flag}</span>
-                            <div className="flex flex-wrap gap-1">
-                              {tm.map(s => <span key={s.id} title={STICKER_MAP[s.id]?.name ?? s.id} className="text-xs font-mono bg-gray-800 text-gray-300 px-2 py-0.5 rounded border border-gray-700">{s.id}</span>)}
-                            </div>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          )}
-        </>
+      {missing.length > 0 && (
+        <button onClick={shareWA} className="w-full flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#1ebe5d] text-white font-bold py-3 rounded-2xl transition-colors">
+          {WA_ICON} Compartir faltantes por WhatsApp
+        </button>
       )}
 
-      {/* ── REPETIDAS ── */}
-      {tab === 'repeated' && (
-        <>
-          <div className="flex items-center justify-between">
-            <p className="text-gray-500 text-sm">
-              {repeated.length === 0 ? 'No tenés repetidas todavía.' : `${repeated.length} figuritas repetidas`}
-            </p>
-            {repeated.length > 0 && (
-              <button onClick={copyRepeated} className="bg-gray-800 hover:bg-gray-700 text-gray-200 text-sm px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5">
-                {copiedRepeated ? '✓ Copiado' : '📋 Copiar'}
-              </button>
-            )}
-          </div>
+      {missing.length === 0 ? (
+        <div className="bg-green-900/30 border border-green-800 rounded-2xl p-10 text-center">
+          <span className="text-5xl">🏆</span>
+          <p className="text-green-300 font-bold text-lg mt-4">¡Álbum completo!</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {(() => {
+            const fwcM = missing.filter(s => s.type === 'intro' || s.type === 'museum')
+            if (fwcM.length === 0) return null
+            return (
+              <div className="bg-gray-900 rounded-xl border border-gray-800 p-4">
+                <h3 className="font-semibold text-yellow-400 mb-3">🏅 Introducción FWC <span className="text-xs text-gray-500 font-normal">faltan {fwcM.length}</span></h3>
+                <div className="flex flex-wrap gap-1.5">
+                  {fwcM.map(s => <span key={s.id} className="text-xs font-mono bg-gray-800 text-yellow-300 px-2 py-0.5 rounded border border-gray-700">{s.id}</span>)}
+                </div>
+              </div>
+            )
+          })()}
 
-          {repeated.length === 0 ? (
-            <div className="bg-gray-900 border border-gray-800 rounded-2xl p-10 text-center">
-              <span className="text-5xl">🔄</span>
-              <p className="text-gray-400 font-semibold mt-4">Sin repetidas aún</p>
-              <p className="text-gray-600 text-sm mt-1">Cuando tengas más de 1 figurita igual aparece acá.</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <button
-                onClick={shareWhatsAppRepeated}
-                className="w-full flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#1ebe5d] text-white font-bold py-3 rounded-2xl transition-colors"
-              >
-                {WA_ICON} Compartir repetidas por WhatsApp
-              </button>
+          {(() => {
+            const ccM = missing.filter(s => s.type === 'cocacola')
+            if (ccM.length === 0) return null
+            return (
+              <div className="bg-gray-900 rounded-xl border border-red-900/50 p-4">
+                <h3 className="font-semibold text-red-400 mb-3">🥤 Coca-Cola <span className="text-xs text-gray-500 font-normal">faltan {ccM.length} de {CC_STICKERS_IDS.length}</span></h3>
+                <div className="flex flex-wrap gap-1.5">
+                  {ccM.map(s => <span key={s.id} className="text-xs font-mono bg-gray-800 text-red-300 px-2 py-0.5 rounded border border-gray-700">{s.id}</span>)}
+                </div>
+              </div>
+            )
+          })()}
 
-              {GROUPS.map(group => {
-                const gr = repeated.filter(s => s.group === group.id)
-                if (gr.length === 0) return null
-                return (
-                  <div key={group.id} className="bg-gray-900 rounded-xl border border-amber-900/40 p-4">
-                    <h3 className="font-semibold text-amber-400 mb-3">Grupo {group.id} <span className="text-xs text-gray-500 font-normal">{gr.length} repetidas</span></h3>
-                    <div className="space-y-2">
-                      {group.teams.map(team => {
-                        const tr = gr.filter(s => s.teamCode === team.code)
-                        if (tr.length === 0) return null
-                        return (
-                          <div key={team.code} className="flex items-start gap-2">
-                            <span className="text-base shrink-0 mt-0.5">{team.flag}</span>
-                            <div className="flex flex-wrap gap-1">
-                              {tr.map(s => <span key={s.id} className="text-xs font-mono bg-amber-900/40 text-amber-300 px-2 py-0.5 rounded border border-amber-800/50">{s.id} ×{owned[s.id]}</span>)}
-                            </div>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )
-              })}
-
-              {(() => {
-                const fwcR = repeated.filter(s => s.type === 'intro' || s.type === 'museum')
-                if (fwcR.length === 0) return null
-                return (
-                  <div className="bg-gray-900 rounded-xl border border-amber-900/40 p-4">
-                    <h3 className="font-semibold text-yellow-400 mb-3">🏅 FWC</h3>
-                    <div className="flex flex-wrap gap-1.5">
-                      {fwcR.map(s => <span key={s.id} className="text-xs font-mono bg-amber-900/40 text-amber-300 px-2 py-0.5 rounded border border-amber-800/50">{s.id} ×{owned[s.id]}</span>)}
-                    </div>
-                  </div>
-                )
-              })()}
-
-              {(() => {
-                const ccR = repeated.filter(s => s.type === 'cocacola')
-                if (ccR.length === 0) return null
-                return (
-                  <div className="bg-gray-900 rounded-xl border border-amber-900/40 p-4">
-                    <h3 className="font-semibold text-red-400 mb-3">🥤 Coca-Cola</h3>
-                    <div className="flex flex-wrap gap-1.5">
-                      {ccR.map(s => <span key={s.id} className="text-xs font-mono bg-amber-900/40 text-amber-300 px-2 py-0.5 rounded border border-amber-800/50">{s.id} ×{owned[s.id]}</span>)}
-                    </div>
-                  </div>
-                )
-              })()}
-            </div>
-          )}
-        </>
+          {GROUPS.map(group => {
+            const gm = missing.filter(s => s.group === group.id)
+            if (gm.length === 0) return null
+            return (
+              <div key={group.id} className="bg-gray-900 rounded-xl border border-gray-800 p-4">
+                <h3 className="font-semibold text-green-400 mb-3">Grupo {group.id} <span className="text-xs text-gray-500 font-normal">faltan {gm.length}</span></h3>
+                <div className="space-y-2">
+                  {group.teams.map(team => {
+                    const tm = gm.filter(s => s.teamCode === team.code)
+                    if (tm.length === 0) return null
+                    return (
+                      <div key={team.code} className="flex items-start gap-2">
+                        <span className="text-base shrink-0 mt-0.5">{team.flag}</span>
+                        <div className="flex flex-wrap gap-1">
+                          {tm.map(s => <span key={s.id} title={STICKER_MAP[s.id]?.name ?? s.id} className="text-xs font-mono bg-gray-800 text-gray-300 px-2 py-0.5 rounded border border-gray-700">{s.id}</span>)}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )
+          })}
+        </div>
       )}
     </div>
   )

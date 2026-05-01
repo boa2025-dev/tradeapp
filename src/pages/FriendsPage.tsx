@@ -1,15 +1,20 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useFriends } from '../hooks/useFriends'
 import { useAuth } from '../hooks/useAuth'
+import QRModal from '../components/QRModal'
+import QRScannerModal from '../components/QRScannerModal'
 
 const APP_URL = 'https://tradeapp26.vercel.app'
 
 export default function FriendsPage() {
   const { friends, requests, loading, addByUsername, accept, reject, remove } = useFriends()
   const { profile } = useAuth()
+  const navigate = useNavigate()
 
   const [searchInput, setSearchInput] = useState('')
+  const [showQR, setShowQR] = useState(false)
+  const [showQRScanner, setShowQRScanner] = useState(false)
   const [searchMsg, setSearchMsg] = useState('')
   const [searchError, setSearchError] = useState('')
   const [searchLoading, setSearchLoading] = useState(false)
@@ -58,6 +63,33 @@ export default function FriendsPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-xl font-bold text-white">Amigos</h1>
+
+      {/* Modals */}
+      {showQR && profile && <QRModal username={profile.username} onClose={() => setShowQR(false)} />}
+      {showQRScanner && (
+        <QRScannerModal
+          onDetected={username => { setShowQRScanner(false); navigate(`/add?u=${username}`) }}
+          onClose={() => setShowQRScanner(false)}
+        />
+      )}
+
+      {/* QR buttons */}
+      <div className="grid grid-cols-2 gap-3">
+        <button
+          onClick={() => setShowQR(true)}
+          className="flex flex-col items-center justify-center gap-1.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 text-white font-semibold py-4 rounded-2xl transition-colors"
+        >
+          <span className="text-2xl">🔲</span>
+          <span className="text-sm">Mi QR</span>
+        </button>
+        <button
+          onClick={() => setShowQRScanner(true)}
+          className="flex flex-col items-center justify-center gap-1.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 text-white font-semibold py-4 rounded-2xl transition-colors"
+        >
+          <span className="text-2xl">📷</span>
+          <span className="text-sm">Escanear QR</span>
+        </button>
+      </div>
 
       {/* Invite via WhatsApp */}
       <button
