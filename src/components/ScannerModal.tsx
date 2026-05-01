@@ -23,11 +23,11 @@ function parseCode(text: string): string | null {
 function cropTopRight(video: HTMLVideoElement): HTMLCanvasElement {
   const sw = video.videoWidth
   const sh = video.videoHeight
-  // Crop: right 30% and top 25%
-  const cropX = Math.floor(sw * 0.68)
-  const cropY = 0
-  const cropW = sw - cropX
-  const cropH = Math.floor(sh * 0.25)
+  // Crop: center 40% width, center 20% height
+  const cropW = Math.floor(sw * 0.4)
+  const cropH = Math.floor(sh * 0.2)
+  const cropX = Math.floor((sw - cropW) / 2)
+  const cropY = Math.floor((sh - cropH) / 2)
 
   // Scale up 4x for better OCR
   const scale = 4
@@ -157,17 +157,21 @@ export default function ScannerModal({ onAdd, onClose }: ScannerModalProps) {
               className="w-full h-full object-cover"
             />
 
-            {/* Target box — top-right of sticker = top-right of camera view */}
-            <div className="absolute top-16 right-4 w-32 h-16 pointer-events-none">
-              <div className="absolute inset-0 border-2 border-green-400 rounded-lg opacity-80" />
-              {/* Corner accents */}
-              <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-green-300 rounded-tl-lg" />
-              <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-green-300 rounded-tr-lg" />
-              <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-green-300 rounded-bl-lg" />
-              <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-green-300 rounded-br-lg" />
-              {/* Scanning line animation */}
-              {ready && <div className="absolute left-1 right-1 h-0.5 bg-green-400/70 animate-scan-line" />}
-              <p className="absolute -bottom-5 left-0 right-0 text-center text-green-400 text-[9px] font-bold">CÓDIGO</p>
+            {/* Target box — centered */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="relative w-64 h-24">
+                <div className="absolute inset-0 border-2 border-green-400 rounded-xl opacity-80" />
+                {/* Corner accents */}
+                <div className="absolute top-0 left-0 w-5 h-5 border-t-[3px] border-l-[3px] border-green-300 rounded-tl-xl" />
+                <div className="absolute top-0 right-0 w-5 h-5 border-t-[3px] border-r-[3px] border-green-300 rounded-tr-xl" />
+                <div className="absolute bottom-0 left-0 w-5 h-5 border-b-[3px] border-l-[3px] border-green-300 rounded-bl-xl" />
+                <div className="absolute bottom-0 right-0 w-5 h-5 border-b-[3px] border-r-[3px] border-green-300 rounded-br-xl" />
+                {/* Scanning line */}
+                {ready && <div className="absolute left-2 right-2 h-0.5 bg-green-400/80 animate-scan-line" />}
+                <p className="absolute -bottom-6 left-0 right-0 text-center text-green-400 text-[10px] font-bold tracking-widest">
+                  APUNTÁ EL CÓDIGO ACÁ
+                </p>
+              </div>
             </div>
 
             {/* Flash overlay when code found */}
