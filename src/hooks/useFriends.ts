@@ -7,6 +7,7 @@ import {
   sendFriendRequest,
   acceptFriendRequest,
   rejectFriendRequest,
+  cancelFriendRequest,
   removeFriend,
   getStickers,
   UserProfile,
@@ -24,18 +25,21 @@ export function useFriends() {
   const { user, profile } = useAuth()
   const [friends, setFriends] = useState<UserProfile[]>([])
   const [requests, setRequests] = useState<UserProfile[]>([])
+  const [sentRequests, setSentRequests] = useState<UserProfile[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (!user) { setLoading(false); return }
 
     const unsub = subscribeToProfile(user.uid, async updated => {
-      const [friendProfiles, requestProfiles] = await Promise.all([
+      const [friendProfiles, requestProfiles, sentProfiles] = await Promise.all([
         Promise.all(updated.friends.map(uid => getUserProfile(uid))),
         Promise.all(updated.friendRequests.map(uid => getUserProfile(uid))),
+        Promise.all((updated.sentRequests ?? []).map(uid => getUserProfile(uid))),
       ])
       setFriends(friendProfiles.filter(Boolean) as UserProfile[])
       setRequests(requestProfiles.filter(Boolean) as UserProfile[])
+      setSentRequests(sentProfiles.filter(Boolean) as UserProfile[])
       setLoading(false)
     })
     return unsub
@@ -65,6 +69,11 @@ export function useFriends() {
     await rejectFriendRequest(user.uid, requesterUid)
   }
 
+  async function cancel(toUid: string) {
+    if (!user) return
+    await cancelFriendRequest(user.uid, toUid)
+  }
+
   async function remove(friendUid: string) {
     if (!user) return
     await removeFriend(user.uid, friendUid)
@@ -83,5 +92,5 @@ export function useFriends() {
     return { canGive, canReceive }
   }
 
-  return { friends, requests, loading, addByUsername, accept, reject, remove, getTradesWithFriend }
+  return { friends, requests, sentRequests, loading, addByUsername, accept, reject, cancel, remove, getTradesWithFriend }
 }

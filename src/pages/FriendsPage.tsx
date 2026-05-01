@@ -8,7 +8,7 @@ import QRScannerModal from '../components/QRScannerModal'
 const APP_URL = 'https://tradeapp26.vercel.app'
 
 export default function FriendsPage() {
-  const { friends, requests, loading, addByUsername, accept, reject, remove } = useFriends()
+  const { friends, requests, sentRequests, loading, addByUsername, accept, reject, cancel, remove } = useFriends()
   const { profile } = useAuth()
   const navigate = useNavigate()
 
@@ -132,16 +132,21 @@ export default function FriendsPage() {
         )}
       </div>
 
-      {/* Pending requests */}
+      {/* Solicitudes recibidas */}
       {requests.length > 0 && (
         <div className="bg-gray-900 rounded-2xl border border-yellow-900 p-5">
           <h2 className="font-semibold text-yellow-400 mb-3">
-            Solicitudes pendientes ({requests.length})
+            Solicitudes recibidas ({requests.length})
           </h2>
           <div className="space-y-2">
             {requests.map(req => (
               <div key={req.uid} className="flex items-center justify-between bg-gray-800 rounded-lg px-3 py-2">
-                <span className="text-white font-medium">@{req.username}</span>
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-yellow-800 flex items-center justify-center text-yellow-200 font-bold text-sm">
+                    {req.username[0].toUpperCase()}
+                  </div>
+                  <span className="text-white font-medium">@{req.username}</span>
+                </div>
                 <div className="flex gap-2">
                   <button
                     onClick={() => accept(req.uid)}
@@ -156,6 +161,37 @@ export default function FriendsPage() {
                     Rechazar
                   </button>
                 </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Solicitudes enviadas pendientes */}
+      {sentRequests.length > 0 && (
+        <div className="bg-gray-900 rounded-2xl border border-blue-900 p-5">
+          <h2 className="font-semibold text-blue-400 mb-3">
+            Enviadas — esperando respuesta ({sentRequests.length})
+          </h2>
+          <div className="space-y-2">
+            {sentRequests.map(s => (
+              <div key={s.uid} className="flex items-center justify-between bg-gray-800 rounded-lg px-3 py-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-blue-900 flex items-center justify-center text-blue-200 font-bold text-sm">
+                    {s.username[0].toUpperCase()}
+                  </div>
+                  <div>
+                    <span className="text-white font-medium">@{s.username}</span>
+                    <span className="ml-2 text-xs bg-blue-900/60 text-blue-300 px-1.5 py-0.5 rounded-full">Pendiente</span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => cancel(s.uid)}
+                  className="text-gray-500 hover:text-red-400 text-xs transition-colors px-2"
+                  title="Cancelar solicitud"
+                >
+                  Cancelar
+                </button>
               </div>
             ))}
           </div>

@@ -18,6 +18,7 @@ export interface UserProfile {
   email: string
   friends: string[]
   friendRequests: string[]
+  sentRequests: string[]
   createdAt: unknown
 }
 
@@ -29,7 +30,7 @@ export async function createUserProfile(uid: string, username: string, email: st
   await Promise.all([
     setDoc(doc(db, 'users', uid), {
       uid, username, email,
-      friends: [], friendRequests: [],
+      friends: [], friendRequests: [], sentRequests: [],
       createdAt: serverTimestamp(),
     }),
     setDoc(doc(db, 'usernames', username), { uid }),
@@ -93,9 +94,10 @@ export async function setStickerQty(uid: string, stickerId: string, qty: number)
 // ── Friends ───────────────────────────────────────────────────
 
 export async function sendFriendRequest(fromUid: string, toUid: string): Promise<void> {
-  await updateDoc(doc(db, 'users', toUid), {
-    friendRequests: arrayUnion(fromUid),
-  })
+  await Promise.all([
+    updateDoc(doc(db, 'users', toUid), { friendRequests: arrayUnion(fromUid) }),
+    updateDoc(doc(db, 'users', fromUid), { sentRequests: arrayUnion(toUid) }),
+  ])
 }
 
 export async function acceptFriendRequest(myUid: string, requesterUid: string): Promise<void> {
@@ -106,14 +108,23 @@ export async function acceptFriendRequest(myUid: string, requesterUid: string): 
     }),
     updateDoc(doc(db, 'users', requesterUid), {
       friends: arrayUnion(myUid),
+      sentRequests: arrayRemove(myUid),
     }),
   ])
 }
 
 export async function rejectFriendRequest(myUid: string, requesterUid: string): Promise<void> {
-  await updateDoc(doc(db, 'users', myUid), {
-    friendRequests: arrayRemove(requesterUid),
-  })
+  await Promise.all([
+    updateDoc(doc(db, 'users', myUid), { friendRequests: arrayRemove(requesterUid) }),
+    updateDoc(doc(db, 'users', requesterUid), { sentRequests: arrayRemove(myUid) }),
+  ])
+}
+
+export async function cancelFriendRequest(fromUid: string, toUid: string): Promise<void> {
+  await Promise.all([
+    updateDoc(doc(db, 'users', toUid), { friendRequests: arrayRemove(fromUid) }),
+    updateDoc(doc(db, 'users', fromUid), { sentRequests: arrayRemove(toUid) }),
+  ])
 }
 
 export async function removeFriend(myUid: string, friendUid: string): Promise<void> {
