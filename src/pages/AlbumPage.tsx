@@ -52,17 +52,7 @@ export default function AlbumPage() {
       )}
       <ProgressBar owned={ownedCount} total={total} percentage={percentage} />
 
-      <div className="flex items-center gap-3">
-        <h1 className="text-xl font-bold text-white flex-1">Álbum FIFA World Cup 2026™</h1>
-        {canScan && (
-          <button
-            onClick={() => setScanning(true)}
-            className="flex items-center gap-1.5 bg-green-700 hover:bg-green-600 text-white text-sm font-semibold px-3 py-2 rounded-xl transition-colors"
-          >
-            <span>📷</span> Escanear
-          </button>
-        )}
-      </div>
+      <h1 className="text-xl font-bold text-white">Álbum FIFA World Cup 2026™</h1>
 
       <div className="flex items-center gap-3 text-xs text-gray-500">
         <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-600 inline-block"/>Tenés</span>
@@ -124,6 +114,17 @@ export default function AlbumPage() {
             ))}
           </div>
         </div>
+      )}
+
+      {/* Floating scan button */}
+      {canScan && (
+        <button
+          onClick={() => setScanning(true)}
+          className="fixed bottom-6 right-6 z-40 flex items-center gap-2 bg-green-600 hover:bg-green-500 active:scale-95 text-white font-bold px-5 py-4 rounded-2xl shadow-xl shadow-green-900/50 transition-all"
+        >
+          <span className="text-xl">📷</span>
+          <span>Escanear</span>
+        </button>
       )}
     </div>
   )
