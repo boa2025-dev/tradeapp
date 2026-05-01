@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { useFriends } from '../hooks/useFriends'
 import { useAuth } from '../hooks/useAuth'
 
-const APP_URL = 'tradeapp26.vercel.app'
+const APP_URL = 'https://tradeapp26.vercel.app'
 
 export default function FriendsPage() {
   const { friends, requests, loading, addByUsername, accept, reject, remove } = useFriends()

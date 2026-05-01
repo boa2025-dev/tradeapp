@@ -5,7 +5,7 @@ import { CC_STICKERS_IDS } from '../data/stickers'
 
 type Tab = 'missing' | 'repeated'
 
-const APP_URL = 'tradeapp26.vercel.app'
+const APP_URL = 'https://tradeapp26.vercel.app'
 
 const WA_ICON = (
   <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white shrink-0">
