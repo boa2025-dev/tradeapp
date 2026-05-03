@@ -4,18 +4,10 @@ import { GROUPS, ALL_STICKERS } from '../data/stickers'
 import ProgressBar from '../components/ProgressBar'
 import GroupSection from '../components/GroupSection'
 import StickerItem from '../components/StickerItem'
-import ScannerModal from '../components/ScannerModal'
 
 export default function AlbumPage() {
   const { owned, loading, increment, decrement, percentage, total, ownedCount } = useStickers()
   const [search, setSearch] = useState('')
-  const [scanning, setScanning] = useState(false)
-
-  async function handleScanAdd(ids: string[]) {
-    for (const id of ids) {
-      await increment(id)
-    }
-  }
 
   if (loading) {
     return (
@@ -41,12 +33,6 @@ export default function AlbumPage() {
 
   return (
     <div className="space-y-5">
-      {scanning && (
-        <ScannerModal
-          onAdd={handleScanAdd}
-          onClose={() => setScanning(false)}
-        />
-      )}
       <ProgressBar owned={ownedCount} total={total} percentage={percentage} />
 
       <h1 className="text-xl font-bold text-white">Álbum FIFA World Cup 2026™</h1>
@@ -112,15 +98,6 @@ export default function AlbumPage() {
           </div>
         </div>
       )}
-
-      {/* Floating scan button */}
-      <button
-          onClick={() => setScanning(true)}
-          className="fixed bottom-6 right-6 z-40 flex items-center gap-2 bg-green-600 hover:bg-green-500 active:scale-95 text-white font-bold px-5 py-4 rounded-2xl shadow-xl shadow-green-900/50 transition-all"
-        >
-          <span className="text-xl">📷</span>
-          <span>Escanear</span>
-        </button>
     </div>
   )
 }
